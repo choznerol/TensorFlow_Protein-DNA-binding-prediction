@@ -18,8 +18,8 @@ depth根據第九頁的 num_motifs=16 選擇了16
 
 
 ## Model:
-
-           batch      height     width      channel
+>
+>          batch      height     width      channel
 data:      5          121        4          1
 conv:      5          121        4          16
 relu:      5          121        4          16
@@ -30,8 +30,8 @@ output:    5          2
 
 
 ## 參數：
-
-image_size   = [121,4]  ## 101bps, plus 10bps frenking on both end
+>
+>image_size   = [121,4]  ## 101bps, plus 10bps frenking on both end
 num_labels   = 2        ## bind or not (1 or 0)
 batch_size   = 256      ## TODO: try with double strand input!
 filter_size  = [11,3]   ## Motif detector length = 11 (about 1.5 times of expected motif length)
