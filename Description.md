@@ -17,7 +17,6 @@ depth根據第九頁的 num_motifs=16 選擇了16
 故最後的Model選擇如下
 
 
-<code>
 ## Model:
            [batch, height, width, channel]
 data:      [5, 121, 4, 1]
@@ -38,7 +37,7 @@ filter_size  = [11,3]   ## Motif detector length = 11 (about 1.5 times of expect
 depth        = 16       ## Number of motif detector (num_motif) = 16
 num_hidden   = 32       ## 32 ReLU units of no hidden layer at all
 num_steps    = 2000     ## 
-</code>
+
 
 ## test結果：72.9%
 >
