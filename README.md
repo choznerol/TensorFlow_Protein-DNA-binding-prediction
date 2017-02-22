@@ -115,8 +115,8 @@ def accuracy(predictions, labels):
 ```python
 image_size   = [121,4]  ## 101bps, plus 10bps frenking on both end
 num_labels   = 2        ## bind or not (1 or 0)
-batch_size   = 5        ## TODO: try with double strand input!
-filter_size  = [11,3]   ## Motif detector length = 11 (about 1.5 times of expected motif length)
+batch_size   = 256      ## TODO: try with double strand input!
+filter_size  = [11,4]   ## Motif detector length = 11 (about 1.5 times of expected motif length)
 depth        = 16       ## Number of motif detector (num_motif) = 16
 num_hidden   = 32       ## 32 ReLU units of no hidden layer at all
 
@@ -180,19 +180,16 @@ with graph.as_default():
     train_prediction = tf.nn.softmax(logits)
     valid_prediction = tf.nn.softmax(model(tf_valid_dataset))
     test_prediction = tf.nn.softmax(model(tf_test_dataset))
-    
-#     test_prediction = tf.nn.softmax(model(tf_valid_dataset))
-#     valid_prediction = tf.nn.softmax(model(tf_test_dataset))
 ```
 
                [batch, height, width, channel]
-    data:      [5, 121, 4, 1]
-    conv:      [5, 121, 4, 16]
-    relu:      [5, 121, 4, 16]
-    pooling:   [5, 60, 2, 16]
-    reshape:   [5, 1920]
-    hidden:    [5, 32]
-    output:    [5, 2] 
+    data:      [256, 121, 4, 1]
+    conv:      [256, 121, 4, 16]
+    relu:      [256, 121, 4, 16]
+    pooling:   [256, 60, 2, 16]
+    reshape:   [256, 1920]
+    hidden:    [256, 32]
+    output:    [256, 2] 
     
     
                [batch, height, width, channel]
@@ -219,52 +216,134 @@ with graph.as_default():
 
 
 ```python
-num_steps = 1000
+def run_session(num_steps = 1000):
+    
+    with tf.Session(graph=graph) as session:
+        tf.initialize_all_variables().run()
+        print('\t',     'Minibatch\t', 'Minibatch\t',  'Validation')
+        print('Step\t', 'Loss\t\t',      'Accuracy\t',  'Accuracy')
+        for step in range(num_steps+1):
+            offset = (step * batch_size) % (train_labels.shape[0] - batch_size)
+            batch_data = train_dataset[offset:(offset + batch_size), :, :, :]
+            batch_labels = train_labels[offset:(offset + batch_size), :]
+            feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels}
+            _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
+            if (step % 50 == 0):
+                print('%d\t %f\t %.1f%%\t\t %.1f%%\t' % (
+                    step,
+                    l,
+                    accuracy(predictions, batch_labels),
+                    accuracy(valid_prediction.eval(), valid_labels)
+                ))
+        print('*** TEST ACCURACY: %.1f%% ***' % accuracy(test_prediction.eval(), test_labels))
+        prediction_ndarray = test_prediction.eval()
 
-with tf.Session(graph=graph) as session:
-    tf.initialize_all_variables().run()
-    print('\t',     'Minibatch\t', 'Minibatch\t',  'Validation')
-    print('Step\t', 'Loss\t\t',      'Accuracy\t',  'Accuracy')
-    for step in range(num_steps+1):
-        offset = (step * batch_size) % (train_labels.shape[0] - batch_size)
-        batch_data = train_dataset[offset:(offset + batch_size), :, :, :]
-        batch_labels = train_labels[offset:(offset + batch_size), :]
-        feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels}
-        _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
-        if (step % 50 == 0):
-            print('%d\t %f\t %.1f%%\t\t %.1f%%\t' % (
-                step,
-                l,
-                accuracy(predictions, batch_labels),
-                accuracy(valid_prediction.eval(), valid_labels)
-            ))
-    print('*** TEST ACCURACY: %.1f%% ***' % accuracy(test_prediction.eval(), test_labels))
+run_session(num_steps = 1000)
 ```
 
     	 Minibatch	 Minibatch	 Validation
     Step	 Loss		 Accuracy	 Accuracy
-    0	 0.780429	 40.0%		 50.0%	
-    50	 0.693147	 20.0%		 50.0%	
-    100	 0.693147	 80.0%		 50.0%	
-    150	 0.693147	 100.0%		 50.0%	
-    200	 0.693147	 80.0%		 50.0%	
-    250	 0.693147	 0.0%		 50.0%	
-    300	 0.693147	 100.0%		 50.0%	
-    350	 0.693147	 40.0%		 50.0%	
-    400	 0.693147	 80.0%		 50.0%	
-    450	 0.693147	 40.0%		 50.0%	
-    500	 0.693147	 80.0%		 50.0%	
-    550	 0.693147	 60.0%		 50.0%	
-    600	 0.693147	 20.0%		 50.0%	
-    650	 0.693147	 40.0%		 50.0%	
-    700	 0.693147	 60.0%		 50.0%	
-    750	 0.693147	 60.0%		 50.0%	
-    800	 0.693147	 60.0%		 50.0%	
-    850	 0.693147	 40.0%		 50.0%	
-    900	 0.693147	 20.0%		 50.0%	
-    950	 0.693147	 60.0%		 50.0%	
-    1000	 0.693147	 20.0%		 50.0%	
-    *** TEST ACCURACY: 50.7% ***
+    0	 0.725892	 54.3%		 49.4%	
+    50	 0.702979	 48.4%		 51.7%	
+    100	 0.705922	 49.6%		 53.3%	
+    150	 0.687450	 55.1%		 55.2%	
+    200	 0.680434	 58.2%		 55.9%	
+    250	 0.668010	 60.2%		 51.9%	
+    300	 0.665098	 59.4%		 59.0%	
+    350	 0.655646	 62.1%		 58.4%	
+    400	 0.749678	 46.9%		 51.8%	
+    450	 0.621250	 68.8%		 60.7%	
+    500	 0.611697	 71.9%		 63.7%	
+    550	 0.680555	 56.2%		 60.9%	
+    600	 0.641611	 62.1%		 65.4%	
+    650	 0.610430	 68.0%		 66.7%	
+    700	 0.607095	 67.2%		 62.7%	
+    750	 0.652847	 59.8%		 59.3%	
+    800	 0.597264	 65.6%		 66.1%	
+    850	 0.571627	 73.8%		 67.0%	
+    900	 0.610575	 63.3%		 70.1%	
+    950	 0.586581	 70.7%		 70.6%	
+    1000	 0.560463	 71.5%		 70.6%	
+    *** TEST ACCURACY: 71.8% ***
+
+
+
+```python
+run_session(num_steps = 2000)
+```
+
+    	 Minibatch	 Minibatch	 Validation
+    Step	 Loss		 Accuracy	 Accuracy
+    0	 0.704212	 46.5%		 50.3%	
+    50	 0.711170	 50.0%		 51.7%	
+    100	 0.702906	 50.0%		 53.5%	
+    150	 0.681891	 53.9%		 55.6%	
+    200	 0.694169	 52.7%		 57.0%	
+    250	 0.661604	 60.5%		 52.5%	
+    300	 0.652424	 63.7%		 60.2%	
+    350	 0.648504	 60.9%		 58.5%	
+    400	 0.758930	 47.7%		 51.2%	
+    450	 0.606714	 69.9%		 61.2%	
+    500	 0.602666	 68.0%		 64.5%	
+    550	 0.666663	 55.1%		 63.6%	
+    600	 0.608256	 68.4%		 66.3%	
+    650	 0.617038	 64.8%		 67.7%	
+    700	 0.613045	 63.3%		 63.1%	
+    750	 0.659635	 58.6%		 59.8%	
+    800	 0.584620	 68.0%		 67.6%	
+    850	 0.565616	 70.7%		 67.7%	
+    900	 0.610997	 65.2%		 70.2%	
+    950	 0.587207	 72.3%		 70.8%	
+    1000	 0.595937	 65.6%		 68.7%	
+    1050	 0.650272	 62.9%		 63.7%	
+    1100	 0.549253	 73.0%		 71.5%	
+    1150	 0.647494	 62.5%		 65.4%	
+    1200	 0.531154	 73.0%		 71.1%	
+    1250	 0.545054	 73.0%		 70.8%	
+    1300	 0.604557	 70.7%		 67.9%	
+    1350	 0.572152	 69.1%		 70.9%	
+    1400	 0.535430	 70.7%		 68.5%	
+    1450	 0.517623	 73.8%		 71.8%	
+    1500	 0.623158	 64.8%		 70.5%	
+    1550	 0.529861	 73.0%		 73.4%	
+    1600	 0.554052	 71.1%		 72.7%	
+    1650	 0.602054	 64.8%		 66.2%	
+    1700	 0.559003	 70.3%		 72.6%	
+    1750	 0.520869	 76.2%		 72.5%	
+    1800	 0.537416	 74.2%		 72.5%	
+    1850	 0.587606	 64.8%		 68.4%	
+    1900	 0.552073	 69.5%		 72.7%	
+    1950	 0.624915	 61.7%		 65.2%	
+    2000	 0.531805	 71.1%		 71.7%	
+    *** TEST ACCURACY: 72.9% ***
+
+
+
+```python
+## Export file
+DIST = './Prediction_19383.data'
+
+
+print(prediction_ndarray)
+results = np.argmax(prediction_ndarray, axis=1)
+print('results: ', results)
+
+with open(DIST, 'w') as f:
+    for r in results:
+        f.write(str(r)+'\n')        
+        f.close
+    print('Prediction result saved to',DIST)
+```
+
+    [[ 0.36532587  0.63467413]
+     [ 0.36353308  0.63646686]
+     [ 0.76541942  0.23458053]
+     ..., 
+     [ 0.29438186  0.70561814]
+     [ 0.79588997  0.20411004]
+     [ 0.50122339  0.49877667]]
+    results:  [1 1 0 ..., 1 0 0]
+    Prediction result saved to ./Prediction_19383.data
 
 
 
