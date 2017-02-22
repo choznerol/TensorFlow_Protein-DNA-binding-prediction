@@ -18,8 +18,8 @@ depth根據第九頁的 num_motifs=16 選擇了16
 
 
 ## Model:
->
->          batch      height     width      channel
+<pre>
+           batch      height     width      channel
 data:      5          121        4          1
 conv:      5          121        4          16
 relu:      5          121        4          16
@@ -27,18 +27,18 @@ pooling:   5          60         2          16
 reshape:   5          1920
 hidden:    5          32
 output:    5          2
-
+</pre>
 
 ## 參數：
->
->image_size   = [121,4]  ## 101bps, plus 10bps frenking on both end
+<pre>
+image_size   = [121,4]  ## 101bps, plus 10bps frenking on both end
 num_labels   = 2        ## bind or not (1 or 0)
 batch_size   = 256      ## TODO: try with double strand input!
 filter_size  = [11,3]   ## Motif detector length = 11 (about 1.5 times of expected motif length)
 depth        = 16       ## Number of motif detector (num_motif) = 16
 num_hidden   = 32       ## 32 ReLU units of no hidden layer at all
 num_steps    = 2000     ## 
-
+</pre>
 
 ## test結果：72.9%
 >
