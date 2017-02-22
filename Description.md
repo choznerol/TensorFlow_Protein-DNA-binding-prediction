@@ -18,14 +18,15 @@ depth根據第九頁的 num_motifs=16 選擇了16
 
 
 ## Model:
-           [batch, height, width, channel]
-data:      [5, 121, 4, 1]
-conv:      [5, 121, 4, 16]
-relu:      [5, 121, 4, 16]
-pooling:   [5, 60, 2, 16]
-reshape:   [5, 1920]
-hidden:    [5, 32]
-output:    [5, 2]
+
+           batch      height     width      channel
+data:      5          121        4          1
+conv:      5          121        4          16
+relu:      5          121        4          16
+pooling:   5          60         2          16
+reshape:   5          1920
+hidden:    5          32
+output:    5          2
 
 
 ## 參數：
