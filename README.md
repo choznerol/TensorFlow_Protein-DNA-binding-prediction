@@ -2,7 +2,7 @@
 Protein-DNA binding prediction (CTCF)
 =============
 
-Goal: implement DeepBing with TensorFlow
+Goal: implement DeepBind with TensorFlow
 ------------
 
 
